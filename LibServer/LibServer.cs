@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Text.Json;
 using System.Net;
 using System.Net.Sockets;
@@ -142,9 +143,34 @@ namespace LibServerSolution
         /// </summary>
         public override void handelListening()
         {
+            string data = null;
+            byte[] buffer = new byte[1000];
+
             createSocketAndConnectHelpers();
             //todo: To meet the assignment requirement, finish the implementation of this method.
+            Socket serverSocketListen = serverSocket.Accept();
 
+            while (serverSocketListen.Connected)
+            {
+                int b = serverSocketListen.Receive(buffer);
+                data = Encoding.ASCII.GetString(buffer, 0, b);
+                byte[] msgClient = new byte[1000];
+
+                LibData.Message messageToSendClient = new Message();
+                Message messageToRec = new Message();
+
+                if (data != "")
+                {
+                    messageToRec = JsonSerializer.Deserialize<Message>(data);
+                }
+                else
+                {
+                    serverSocketListen.Close();
+                    break;
+                }
+
+                data = null;
+            }
             
         }
 

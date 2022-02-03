@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "3mb5f9sO6JStq7mWIsu0yMgDEmCBb8CkknEh47jirA2qNMXzLargiS305lrNDg2sruNxScZMoeQncciSS+n2YQ==",
+  "dgSpecHash": "boX0jJ2lSujBzfTLJWbsH5LMM8e5ob6HG43MNB6atAAP8Y7gbf3vlHr+1F82hZB0V+nvPMlQDpYGsNDD7udHGA==",
   "success": true,
-  "projectFilePath": "c:\\Users\\zoon_\\Downloads\\DistLibraryRetakeStudentV1.3\\LibServer\\LibServer.csproj",
+  "projectFilePath": "C:\\Users\\zoon_\\Downloads\\DistLibraryRetakeStudentV1.3\\libserver\\LibServer.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\zoon_\\.nuget\\packages\\microsoft.extensions.configuration\\6.0.0\\microsoft.extensions.configuration.6.0.0.nupkg.sha512",
     "C:\\Users\\zoon_\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\6.0.0\\microsoft.extensions.configuration.abstractions.6.0.0.nupkg.sha512",
