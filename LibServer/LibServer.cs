@@ -145,6 +145,8 @@ namespace LibServerSolution
         {
             string data = null;
             byte[] buffer = new byte[1000];
+            byte[] msgBookResult = new byte[1000];
+            string jsonMsgResult;
 
             createSocketAndConnectHelpers();
             //todo: To meet the assignment requirement, finish the implementation of this method.
@@ -162,6 +164,10 @@ namespace LibServerSolution
                 if (data != "")
                 {
                     messageToRec = JsonSerializer.Deserialize<Message>(data);
+                    var messageToRecReply = processMessage(messageToRec);
+                    jsonMsgResult = JsonSerializer.Serialize(messageToRecReply);
+                    msgBookResult = Encoding.ASCII.GetBytes(jsonMsgResult);
+                    serverSocketListen.Send(msgBookResult);
                 }
                 else
                 {
@@ -181,6 +187,7 @@ namespace LibServerSolution
         /// <param name="message"></param>
         protected override Message processMessage(Message message)
         {
+
             Message pmReply = new Message();
             
             //todo: To meet the assignment requirement, finish the implementation of this method .
