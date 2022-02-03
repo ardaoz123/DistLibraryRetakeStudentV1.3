@@ -92,7 +92,7 @@ namespace BookHelperSolution
         {
             //todo: To meet the assignment requirement, implement this method 
             string jsonBooks = "Books.json";
-            
+
             try
             {
                 string jsonStringBooks = File.ReadAllText(jsonBooks);
@@ -109,6 +109,7 @@ namespace BookHelperSolution
         /// </summary>
         protected override void createSocket()
         {
+            System.Console.WriteLine("createSocket");
             //todo: To meet the assignment requirement, implement this method
             try
             {
@@ -147,6 +148,7 @@ namespace BookHelperSolution
         /// </summary>
         public override void handelListening()
         {
+            System.Console.WriteLine("handelListening");
             createSocket();
             Socket newSock = listener.Accept();
 
@@ -156,21 +158,23 @@ namespace BookHelperSolution
             string data = null;
             string jsonMsgResult;
 
-            while (newSock.Connected)
+            while (true)
             {
+                System.Console.WriteLine("before receive");
                 int b = newSock.Receive(buffer);
+                System.Console.WriteLine("bookhelper loop");
                 data = Encoding.ASCII.GetString(buffer, 0, b);
 
                 Message messageToRec = JsonSerializer.Deserialize<Message>(data);
                 data = null;
 
-                var jsonMsgResultReply =  processMessage(messageToRec);
+                var jsonMsgResultReply = processMessage(messageToRec);
 
                 jsonMsgResult = JsonSerializer.Serialize(jsonMsgResultReply);
                 msgBookResult = Encoding.ASCII.GetBytes(jsonMsgResult);
                 newSock.Send(msgBookResult);
+                System.Console.WriteLine("book result sent");
             }
-            
         }
 
         /// <summary>
@@ -180,24 +184,27 @@ namespace BookHelperSolution
         /// <returns>The message that needs to be sent back as the reply.</returns>
         protected override Message processMessage(Message message)
         {
+            System.Console.WriteLine("processMessage");
             Message reply = new Message();
             //todo: To meet the assignment requirement, finish the implementation of this method .
             try
             {
-                if(message.Type == LibData.MessageType.BookInquiry)
+                if (message.Type == LibData.MessageType.BookInquiry)
                 {
                     bool bookFound = false;
                     foreach (var book in booksList)
+                    {
+                        if (message.Content == book.Title)
                         {
-                            if (message.Content == book.Title)
-                            {
-                                reply.Type = MessageType.BookInquiryReply;
-                                reply.Content = JsonSerializer.Serialize(book);
-                                bookFound = true;
-                            }
+                            System.Console.WriteLine("book found!");
+                            reply.Type = MessageType.BookInquiryReply;
+                            reply.Content = JsonSerializer.Serialize(book);
+                            System.Console.WriteLine(reply.Content);
+                            bookFound = true;
                         }
+                    }
 
-                    if(!bookFound)
+                    if (!bookFound)
                     {
                         reply.Type = MessageType.NotFound;
                         reply.Content = message.Content;
@@ -208,6 +215,7 @@ namespace BookHelperSolution
             {
                 System.Console.WriteLine("ERROR");
             }
+            System.Console.WriteLine("bookhelper reply");
             return reply;
         }
     }

@@ -67,13 +67,13 @@ namespace LibServerSolution
             catch (Exception e) { report("[Exception]", e.Message); }
         }
 
-       
+
         protected abstract void createSocketAndConnectHelpers();
 
         public abstract void handelListening();
 
         protected abstract Message processMessage(Message message);
-    
+
         protected abstract Message requestDataFromHelpers(string msg);
 
 
@@ -90,12 +90,13 @@ namespace LibServerSolution
         {
             GetConfigurationValue();
         }
-        
+
         /// <summary>
         /// Connect socket settings and connect
         /// </summary>
         protected override void createSocketAndConnectHelpers()
         {
+            System.Console.WriteLine("createSocketAndConnectHelpers ");
             // todo: To meet the assignment requirement, finish the implementation of this method.
             // Extra Note: If failed to connect to helper. Server should retry 3 times.
             // After the 3d attempt the server starts anyway and listen to incoming messages to clients
@@ -103,11 +104,11 @@ namespace LibServerSolution
             IPAddress ipAddressBookHelper = IPAddress.Parse(settings.BookHelperIPAddress);
             IPEndPoint BookHelperEndpoint = new IPEndPoint(ipAddressBookHelper, settings.BookHelperPortNumber);
             bookHelperSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            
+
             IPAddress ipAddress = IPAddress.Parse(settings.ServerIPAddress);
             listeningPoint = new IPEndPoint(ipAddress, settings.ServerPortNumber);
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            
+
             try
             {
                 serverSocket.Bind(listeningPoint);
@@ -119,12 +120,15 @@ namespace LibServerSolution
             }
 
             bookHelperSocket.Connect(BookHelperEndpoint);
-            if (!bookHelperSocket.Connected){
-                for (int i = 0; i < 2; i++){
+            if (!bookHelperSocket.Connected)
+            {
+                for (int i = 0; i < 2; i++)
+                {
                     try
-                    { 
+                    {
                         bookHelperSocket.Connect(BookHelperEndpoint);
-                        if (bookHelperSocket.Connected){
+                        if (bookHelperSocket.Connected)
+                        {
                             i = 3;
                         }
                     }
@@ -143,41 +147,49 @@ namespace LibServerSolution
         /// </summary>
         public override void handelListening()
         {
+            System.Console.WriteLine("handelListening");
             string data = null;
-            byte[] buffer = new byte[1000];
+            byte[] buffer = new byte[10000];
             byte[] msgBookResult = new byte[1000];
             string jsonMsgResult;
 
             createSocketAndConnectHelpers();
             //todo: To meet the assignment requirement, finish the implementation of this method.
             Socket serverSocketListen = serverSocket.Accept();
-
-            while (serverSocketListen.Connected)
+            while (true)
             {
-                int b = serverSocketListen.Receive(buffer);
-                data = Encoding.ASCII.GetString(buffer, 0, b);
-                byte[] msgClient = new byte[1000];
-
-                LibData.Message messageToSendClient = new Message();
-                Message messageToRec = new Message();
-
-                if (data != "")
+                while (serverSocketListen.Connected)
                 {
-                    messageToRec = JsonSerializer.Deserialize<Message>(data);
-                    var messageToRecReply = processMessage(messageToRec);
-                    jsonMsgResult = JsonSerializer.Serialize(messageToRecReply);
-                    msgBookResult = Encoding.ASCII.GetBytes(jsonMsgResult);
-                    serverSocketListen.Send(msgBookResult);
-                }
-                else
-                {
-                    serverSocketListen.Close();
-                    break;
-                }
+                    System.Console.WriteLine("looped");
+                    System.Console.WriteLine(data);
+                    int b = serverSocketListen.Receive(buffer);
+                    data = Encoding.ASCII.GetString(buffer, 0, b);
+                    System.Console.WriteLine(data);
 
-                data = null;
+                    byte[] msgClient = new byte[1000];
+
+                    LibData.Message messageToSendClient = new Message();
+                    Message messageToRec = new Message();
+                    System.Console.WriteLine("before if");
+                    if (data != "")
+                    {
+                        System.Console.WriteLine("data is not empty");
+                        messageToRec = JsonSerializer.Deserialize<Message>(data);
+                        var messageToRecReply = processMessage(messageToRec);
+                        System.Console.WriteLine(messageToRecReply.Content);
+                        jsonMsgResult = JsonSerializer.Serialize(messageToRecReply);
+                        msgBookResult = Encoding.ASCII.GetBytes(jsonMsgResult);
+                        serverSocketListen.Send(msgBookResult);
+                    }
+                    else
+                    {
+                        System.Console.WriteLine("server else");
+                        serverSocketListen.Close();
+                        break;
+                    }
+                    data = null;
+                }
             }
-            
         }
 
         /// <summary>
@@ -187,12 +199,37 @@ namespace LibServerSolution
         /// <param name="message"></param>
         protected override Message processMessage(Message message)
         {
-
+            System.Console.WriteLine("processMessage");
             Message pmReply = new Message();
-            
-            //todo: To meet the assignment requirement, finish the implementation of this method .
-           
 
+            try
+            {
+                switch (message.Type)
+                {
+                    // hello message
+                    case LibData.MessageType.Hello:
+                        System.Console.WriteLine("hello");
+                        // assign values to type and content of the message
+                        pmReply.Type = MessageType.Welcome;
+                        break;
+
+                    case LibData.MessageType.BookInquiry:
+                        System.Console.WriteLine("BookInquiry");
+                        // book inquiry test
+                        pmReply = requestDataFromHelpers(message.Content);
+                        break;
+
+                    default:
+                        pmReply.Type = LibData.MessageType.Error;
+                        pmReply.Content = "ERROR";
+                        break;
+
+                }
+            }
+            catch (Exception e)
+            {
+                System.Console.WriteLine("ERROR");
+            }
 
 
             return pmReply;
@@ -205,15 +242,31 @@ namespace LibServerSolution
         /// <returns>Message</returns>
         protected override Message requestDataFromHelpers(string content)
         {
+            System.Console.WriteLine("requestDataFromHelpers");
             Message HelperReply = new Message();
+            byte[] byteMessage = new byte[1000];
+            byte[] bufferReply = new byte[1000];
+            string stringBookHelper;
             //todo: To meet the assignment requirement, finish the implementation of this method .
 
-            // try
-            // {
+            try
+            {
+                HelperReply.Type = MessageType.BookInquiry;
+                HelperReply.Content = content;
 
-               
-            // }
-            // catch () { }
+                stringBookHelper = JsonSerializer.Serialize(HelperReply);
+                byteMessage = Encoding.ASCII.GetBytes(stringBookHelper);
+                bookHelperSocket.Send(byteMessage);
+
+                int c = bookHelperSocket.Receive(bufferReply);
+                stringBookHelper = Encoding.ASCII.GetString(bufferReply, 0, c);
+                HelperReply = JsonSerializer.Deserialize<Message>(stringBookHelper);
+                stringBookHelper = null;
+            }
+            catch (Exception e)
+            {
+                System.Console.WriteLine("ERROR");
+            }
 
             return HelperReply;
 
